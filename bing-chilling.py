@@ -127,45 +127,6 @@ class MCTS:
         return visit_counts
     pass
 
-    def train_model(self):
-        # create an empty list to store the game data
-        game_data = []
-        # loop for a given number of games
-        for i in range(num_games):
-            # create a new board object for each game
-            board = chess.Board()
-            threading.Thread(target=boardRender, args=(board,)).start()
-            # create a new MCTS object for each game
-            mcts = MCTS(model, encode_board(board))
-            # create an empty list to store the board states and move probabilities for each game
-            states = []
-            probs = []
-            # loop until the game is over
-            while not board.is_game_over():
-                # run the MCTS simulation for some iterations
-                mcts.run(iterations)
-                # get the move probability vector from the MCTS object
-                move_probs = mcts.get_move_probs()
-                # append the current board state and move probability vector to the lists
-                states.append(encode_board(board))
-                probs.append(move_probs)
-                # apply the move with the highest probability to the board state
-                mcts.apply_best_move()
-            # get the game result as a reward (-1, 0, or 1)
-            reward = board.game_result()
-            # invert the reward for every other state in the list (because of alternating turns)
-            rewards = [reward if i % 2 == 0 else -reward for i in range(len(states))]
-            # append the states, probs, and rewards lists as a tuple to the game data list
-            game_data.append((states, probs, rewards))
-        # convert the game data list to numpy arrays
-        states = np.concatenate([np.array(x[0]) for x in game_data])
-        probs = np.concatenate([np.array(x[1]) for x in game_data])
-        rewards = np.concatenate([np.array(x[2]) for x in game_data])
-        # train the network using the states, probs, and rewards arrays as inputs and targets
-        model.fit(states, [probs, rewards], epochs=epochs, batch_size=batch_size)
-        # save the model using torch.save method
-        torch.save(model, "model.pt")
-
 class ChessNet():
     # initialize with input size and output size
     def __init__(self, input_size, output_size):
@@ -279,6 +240,44 @@ def decode_score(score):
     # return the scalar value
     return score
 
+def train_model():
+    # create an empty list to store the game data
+    game_data = []
+    # loop for a given number of games
+    for i in range(num_games):
+        # create a new board object for each game
+        board = chess.Board()
+        threading.Thread(target=boardRender, args=(board,)).start()
+        # create a new MCTS object for each game
+        mcts = MCTS(model, encode_board(board))
+        # create an empty list to store the board states and move probabilities for each game
+        states = []
+        probs = []
+        # loop until the game is over
+        while not board.is_game_over():
+            # run the MCTS simulation for some iterations
+            mcts.run(iterations)
+            # get the move probability vector from the MCTS object
+            move_probs = mcts.get_move_probs()
+            # append the current board state and move probability vector to the lists
+            states.append(encode_board(board))
+            probs.append(move_probs)
+            # apply the move with the highest probability to the board state
+            mcts.apply_best_move()
+        # get the game result as a reward (-1, 0, or 1)
+        reward = board.game_result()
+        # invert the reward for every other state in the list (because of alternating turns)
+        rewards = [reward if i % 2 == 0 else -reward for i in range(len(states))]
+        # append the states, probs, and rewards lists as a tuple to the game data list
+        game_data.append((states, probs, rewards))
+    # convert the game data list to numpy arrays
+    states = np.concatenate([np.array(x[0]) for x in game_data])
+    probs = np.concatenate([np.array(x[1]) for x in game_data])
+    rewards = np.concatenate([np.array(x[2]) for x in game_data])
+    # train the network using the states, probs, and rewards arrays as inputs and targets
+    model.fit(states, [probs, rewards], epochs=epochs, batch_size=batch_size)
+    # save the model using torch.save method
+    torch.save(model, "model.pt")
 
 # define epochs, batch_size, iterations, and num_games as global variables
 epochs = 10
@@ -289,9 +288,5 @@ num_games = 1000
 #create a model
 model = ChessNet(768, 4097)
 
-#i have no clue why, but this makes it work
-#most likelly introduces an awful bug
-mcts = MCTS(model, encode_board(chess.Board()))
-
 #train model
-mcts.train_model()
+train_model()
