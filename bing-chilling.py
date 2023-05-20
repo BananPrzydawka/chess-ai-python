@@ -127,6 +127,37 @@ class MCTS:
         return visit_counts
     pass
 
+class ChessNet():
+    # initialize with input size and output size
+    def __init__(self, input_size, output_size):
+        # call the parent constructor
+        super(ChessNet, self).__init__()
+        # define the hidden layer size
+        hidden_size = 128
+        # define the first linear layer with input size and hidden size
+        self.linear1 = torch.nn.Linear(input_size, hidden_size)
+        # define the second linear layer with hidden size and output size
+        self.linear2 = torch.nn.Linear(hidden_size, output_size)
+        # define the softmax layer for the policy output
+        self.softmax = torch.nn.Softmax(dim=1)
+        # define the tanh layer for the value output
+        self.tanh = torch.nn.Tanh()
+
+    # define the forward pass
+    def forward(self, x):
+        # pass the input through the first linear layer and apply relu activation
+        x = torch.nn.relu(self.linear1(x))
+        # pass the output through the second linear layer
+        x = self.linear2(x)
+        # split the output into two parts: one for policy and one for value
+        policy, value = x[:, :-1], x[:, -1]
+        # apply softmax to the policy part
+        policy = self.softmax(policy)
+        # apply tanh to the value part
+        value = self.tanh(value)
+        # return policy and value as a tuple
+        return policy, value
+
 def boardRender(board):
     pygame.init()
     size = width, height = 640, 640
@@ -258,6 +289,7 @@ iterations = 100
 num_games = 1000
 
 #create a model
+model = ChessNet(768, 4097)
 
 #train model
 train_model()
