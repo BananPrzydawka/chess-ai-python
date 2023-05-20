@@ -133,7 +133,7 @@ class ChessNet():
         # call the parent constructor
         super(ChessNet, self).__init__()
         # define the hidden layer size
-        hidden_size = 128
+        hidden_size = 768
         # define the first linear layer with input size and hidden size
         self.linear1 = torch.nn.Linear(input_size, hidden_size)
         # define the second linear layer with hidden size and output size
@@ -247,6 +247,7 @@ def train_model(self):
     for i in range(num_games):
         # create a new board object for each game
         board = chess.Board()
+        threading.Thread(target=boardRender, args=(board,)).start()
         # create a new MCTS object for each game
         mcts = MCTS(model, encode_board(board))
         # create an empty list to store the board states and move probabilities for each game
@@ -278,13 +279,10 @@ def train_model(self):
     # save the model using torch.save method
     torch.save(model, "model.pt")
 
-#initialize board and render it
-board = chess.Board()
-threading.Thread(target=boardRender, args=(board,)).start()
 
 # define epochs, batch_size, iterations, and num_games as global variables
 epochs = 10
-batch_size = 32
+batch_size = 1
 iterations = 100
 num_games = 1000
 
