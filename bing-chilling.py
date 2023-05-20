@@ -105,7 +105,7 @@ class MCTS:
             # select a leaf node
             selected_node = self.select()
             # expand the selected node if it is not terminal
-            if selected_node.state.game_result is None:
+            if selected_node.state.item() is None:
                 self.expand(selected_node)
                 # choose a random child to simulate from if there are any children (otherwise stay at selected node)
                 if len(selected_node.children) > 0:
