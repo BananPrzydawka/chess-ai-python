@@ -141,7 +141,7 @@ class MCTS:
             states = []
             probs = []
             # loop until the game is over
-            while not board.is_terminal():
+            while not board.is_game_over():
                 # run the MCTS simulation for some iterations
                 mcts.run(iterations)
                 # get the move probability vector from the MCTS object
